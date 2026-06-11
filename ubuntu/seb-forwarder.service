@@ -1,0 +1,14 @@
+[Unit]
+Description=SEB Moodle Forwarder Service
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/home/server/setup.sh start
+ExecStop=/home/server/setup.sh stop
+User=root
+
+[Install]
+WantedBy=multi-user.target
