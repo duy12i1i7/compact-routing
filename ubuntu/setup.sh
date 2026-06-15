@@ -48,6 +48,9 @@ do_stop() {
     sed -i '/net.ipv4.ip_forward=1/d' /etc/sysctl.conf 2>/dev/null
     echo "[✓] IP Forwarding đã tắt."
 
+    # Tắt Web Server
+    pkill -f "shutdown_server.py" 2>/dev/null || true
+
     # Xóa Cron Keepalive
     crontab -l 2>/dev/null | grep -v "ping -c 1 $MOODLE_IP" | crontab - 2>/dev/null || true
 
@@ -156,6 +159,11 @@ do_start() {
     (crontab -l 2>/dev/null | grep -v "ping -c 1 $MOODLE_IP"; echo "* * * * * ping -c 1 $MOODLE_IP > /dev/null 2>&1") | crontab -
 
     touch $MARKER_FILE
+
+    # Bật Web Server hỗ trợ tắt máy từ xa
+    if ! pgrep -f "shutdown_server.py" > /dev/null; then
+        nohup python3 /home/server/shutdown_server.py > /dev/null 2>&1 &
+    fi
 
     echo ""
     echo "=========================================="
