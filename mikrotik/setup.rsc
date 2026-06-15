@@ -27,3 +27,7 @@
 # Nếu bạn thay bằng một thiết bị Jetson/Raspberry Pi khác,
 # hãy đổi lại địa chỉ MAC ở biến JetsonMac bên trên cho phù hợp.
 # ==============================================================================
+
+# 3. Cho phép định tuyến không đối xứng (Asymmetric Routing Bypass)
+# Tránh việc Firewall MikroTik drop nhầm gói tin do trả về qua L2
+/ip firewall filter add chain=forward dst-address=$MoodleIP action=accept place-before=[find where connection-state=invalid]
