@@ -117,6 +117,12 @@ do_start() {
         exit 1
     fi
 
+    # Thêm luật MAC filtering cho cổng SSH (Chỉ cho phép Mac của GV)
+    iptables -D INPUT -i eth0 -p tcp --dport 22 -m mac --mac-source e2:5b:11:5c:d0:03 -j ACCEPT 2>/dev/null || true
+    iptables -D INPUT -i eth0 -p tcp --dport 22 -j DROP 2>/dev/null || true
+    iptables -I INPUT 1 -i eth0 -p tcp --dport 22 -m mac --mac-source e2:5b:11:5c:d0:03 -j ACCEPT
+    iptables -I INPUT 2 -i eth0 -p tcp --dport 22 -j DROP
+
     echo ""
     echo "[1/3] Kiểm tra Tailscale..."
     echo "      ⏳ Đang chờ Tailscale khởi tạo đường truyền..."
