@@ -8,26 +8,41 @@
 
 # Biến cấu hình
 :local JetsonMac "48:B0:2D:5B:DC:CE"
+:local TeacherMac "E2:5B:11:5C:D0:03"
 :local JetsonIP "192.168.200.2"
-:local MoodleIP "100.77.242.88/32"
+:local MoodleIP "100.77.242.88"
+:local MoodleDomain "seb.tail873d88.ts.net"
 
 # 1. Đặt IP tĩnh (Static DHCP Lease) cho Jetson Nano
-# Xóa lease cũ nếu có để tránh xung đột
 /ip dhcp-server lease remove [find mac-address=$JetsonMac]
-# Thêm lease tĩnh mới
 /ip dhcp-server lease add address=$JetsonIP mac-address=$JetsonMac server=defconf
 
 # 2. Thêm Static Route bẻ lái gói tin Moodle về Jetson Nano
-# Xóa route cũ nếu có
-/ip route remove [find dst-address=$MoodleIP]
-# Thêm route mới
-/ip route add dst-address=$MoodleIP gateway=$JetsonIP
+/ip route remove [find dst-address=($MoodleIP . "/32")]
+/ip route add dst-address=($MoodleIP . "/32") gateway=$JetsonIP
+
+# 3. Phân giải tên miền ảo (Static DNS) ép Moodle chạy HTTPS
+/ip dns static remove [find name=$MoodleDomain]
+/ip dns static add name=$MoodleDomain address=$MoodleIP
 
 # ==============================================================================
-# Nếu bạn thay bằng một thiết bị Jetson/Raspberry Pi khác,
-# hãy đổi lại địa chỉ MAC ở biến JetsonMac bên trên cho phù hợp.
+# 4. CẤU HÌNH TƯỜNG LỬA (Bảo mật 2 Lớp)
+# - Cho phép kết nối Web (80, 443) tới Moodle.
+# - Cho phép kết nối Quản trị (SSH/22) TỚI Moodle CHỈ TỪ MÁY MAC CỦA GIÁO VIÊN.
+# - Chặn toàn bộ các luồng dữ liệu khác để ngăn sinh viên thâm nhập.
 # ==============================================================================
 
-# 3. Cho phép định tuyến không đối xứng (Asymmetric Routing Bypass)
-# Tránh việc Firewall MikroTik drop nhầm gói tin do trả về qua L2
-/ip firewall filter add chain=forward dst-address=$MoodleIP action=accept place-before=[find where connection-state=invalid]
+# Xóa các luật cũ liên quan đến Moodle (nếu có)
+/ip firewall filter remove [find dst-address=$MoodleIP]
+
+# Lấy ID của luật Drop Invalid để chèn luật mới lên trước nó
+:local invalidRuleID [find where action=drop and connection-state=invalid and chain=forward]
+
+# Thêm luật mở cổng Web
+/ip firewall filter add chain=forward action=accept dst-address=$MoodleIP protocol=tcp dst-port=80,443 place-before=$invalidRuleID
+
+# Thêm luật mở cổng SSH ưu tiên cho máy Giáo viên
+/ip firewall filter add chain=forward action=accept dst-address=$MoodleIP protocol=tcp dst-port=22 src-mac-address=$TeacherMac place-before=$invalidRuleID
+
+# Thêm luật chặn MỌI GÓI TIN KHÁC đến Moodle (Đóng sập cổng sau)
+/ip firewall filter add chain=forward action=drop dst-address=$MoodleIP place-before=$invalidRuleID
