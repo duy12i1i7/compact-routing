@@ -66,6 +66,6 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
 
-with socketserver.TCPServer(("", PORT), AuthHandler) as httpd:
+with socketserver.TCPServer(("100.89.184.32", PORT), AuthHandler) as httpd:
     print(f"Web Shutdown Server with Auth listening on port {PORT}")
     httpd.serve_forever()
