@@ -48,6 +48,9 @@ do_stop() {
     sed -i '/net.ipv4.ip_forward=1/d' /etc/sysctl.conf 2>/dev/null
     echo "[✓] IP Forwarding đã tắt."
 
+    # Xóa Cron Keepalive
+    crontab -l 2>/dev/null | grep -v "ping -c 1 $MOODLE_IP" | crontab - 2>/dev/null || true
+
     rm -f $MARKER_FILE
     echo ""
     echo "  ✅ Đã khôi phục về trạng thái ban đầu."
@@ -128,8 +131,12 @@ do_start() {
     echo "      ✓ Interface: $TS_IFACE"
 
     echo ""
-    echo "[2/3] Bật IP Forwarding..."
+    echo "[2/3] Tối ưu hóa Network & Bật IP Forwarding..."
     sysctl -w net.ipv4.ip_forward=1 > /dev/null
+    sysctl -w net.netfilter.nf_conntrack_max=262144 > /dev/null 2>&1 || true
+    sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=86400 > /dev/null 2>&1 || true
+    sysctl -w net.core.somaxconn=4096 > /dev/null 2>&1 || true
+    sysctl -w net.ipv4.tcp_max_syn_backlog=4096 > /dev/null 2>&1 || true
     if ! grep -q "net.ipv4.ip_forward=1" /etc/sysctl.conf 2>/dev/null; then
         echo "# SEB Moodle Forwarder" >> /etc/sysctl.conf
         echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
@@ -144,6 +151,9 @@ do_start() {
     echo "      ✓ FORWARD + NAT MASQUERADE"
 
     LOCAL_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="src") print $(i+1)}')
+
+    # Thêm Cron Keepalive để giữ kết nối Tailscale Direct (chống độ trễ lần đầu kết nối)
+    (crontab -l 2>/dev/null | grep -v "ping -c 1 $MOODLE_IP"; echo "* * * * * ping -c 1 $MOODLE_IP > /dev/null 2>&1") | crontab -
 
     touch $MARKER_FILE
 
