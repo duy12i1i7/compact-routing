@@ -12,7 +12,10 @@ if (!is_siteadmin()) {
 // Lấy nội dung trang HTML tĩnh từ React Build và in ra
 $html_file = __DIR__ . '/seb_dashboard_assets/index.html';
 if (file_exists($html_file)) {
-    echo file_get_contents($html_file);
+    $html = file_get_contents($html_file);
+    // Chuyển đổi đường dẫn tuyệt đối thành tương đối để tránh lỗi 404 (Trắng trang)
+    $html = str_replace('"/seb_dashboard_assets/', '"./seb_dashboard_assets/', $html);
+    echo $html;
 } else {
     echo "Lỗi: Không tìm thấy giao diện Dashboard.";
 }
