@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
+from functools import wraps
 from flask_cors import CORS
 import routeros_api
 import requests
@@ -17,6 +18,28 @@ MIKROTIK_PASS = ''
 MOODLE_API = 'https://seb.tail873d88.ts.net/dashboard_api.php'
 MOODLE_IP = '100.77.242.88'
 
+# Cấu hình tài khoản đăng nhập (Admin)
+ADMIN_USERNAME = 'admin'
+ADMIN_PASSWORD = 'seb'
+
+def check_auth(username, password):
+    return username == ADMIN_USERNAME and password == ADMIN_PASSWORD
+
+def authenticate():
+    return Response(
+    'Vui lòng đăng nhập bằng tài khoản quản trị để truy cập Dashboard.', 401,
+    {'WWW-Authenticate': 'Basic realm="Admin Dashboard Login Required"'})
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
+
 def get_mikrotik_api():
     connection = routeros_api.RouterOsApiPool(
         MIKROTIK_IP, username=MIKROTIK_USER, password=MIKROTIK_PASS, plaintext_login=True
@@ -24,6 +47,7 @@ def get_mikrotik_api():
     return connection.get_api()
 
 @app.route('/shutdown', methods=['POST'])
+@requires_auth
 def shutdown():
     try:
         subprocess.Popen(['/sbin/shutdown', '-h', 'now'])
@@ -32,10 +56,12 @@ def shutdown():
         return str(e), 500
 
 @app.route('/')
+@requires_auth
 def serve_frontend():
     return app.send_static_file('index.html')
 
 @app.route('/api/stats')
+@requires_auth
 def get_stats():
     stats = {
         "mikrotik": {},
