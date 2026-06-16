@@ -27,6 +27,8 @@ function App() {
   const activeDevices = data?.devices?.filter(d => d.active_on_moodle) || []
   const rxMb = ((data?.mikrotik?.wan_rx || 0) / 1024 / 1024).toFixed(2)
   const txMb = ((data?.mikrotik?.wan_tx || 0) / 1024 / 1024).toFixed(2)
+  const rxSpeedMbps = ((data?.mikrotik?.speed_rx_bps || 0) / 1024 / 1024).toFixed(2)
+  const txSpeedMbps = ((data?.mikrotik?.speed_tx_bps || 0) / 1024 / 1024).toFixed(2)
 
   return (
     <div className="min-h-screen p-8 bg-slate-900 text-slate-100">
@@ -38,16 +40,21 @@ function App() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700 backdrop-blur-sm shadow-xl">
-          <h2 className="text-lg font-medium text-slate-400">Tổng Lưu Lượng (WAN)</h2>
-          <div className="mt-4 flex justify-between items-end">
-            <div>
-              <p className="text-3xl font-bold text-emerald-400">↓ {rxMb} MB</p>
-              <p className="text-sm text-slate-500">Download</p>
+        <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700 backdrop-blur-sm shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+          </div>
+          <h2 className="text-lg font-medium text-slate-400 relative z-10">Lưu Lượng (WAN)</h2>
+          <div className="mt-4 flex flex-col gap-3 relative z-10">
+            <div className="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg">
+              <span className="text-sm text-slate-500 font-semibold w-16">Download</span>
+              <span className="text-xl font-bold text-emerald-400">{rxMb} MB</span>
+              <span className="text-sm font-mono text-emerald-300 bg-emerald-900/30 px-2 py-1 rounded">{rxSpeedMbps} Mbps</span>
             </div>
-            <div>
-              <p className="text-3xl font-bold text-blue-400">↑ {txMb} MB</p>
-              <p className="text-sm text-slate-500">Upload</p>
+            <div className="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg">
+              <span className="text-sm text-slate-500 font-semibold w-16">Upload</span>
+              <span className="text-xl font-bold text-blue-400">{txMb} MB</span>
+              <span className="text-sm font-mono text-blue-300 bg-blue-900/30 px-2 py-1 rounded">{txSpeedMbps} Mbps</span>
             </div>
           </div>
         </div>

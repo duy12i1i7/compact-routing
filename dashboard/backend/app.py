@@ -54,6 +54,15 @@ def get_stats():
         stats["mikrotik"]["wan_rx"] = int(wan_stats.get('rx-byte', 0)) if wan_stats else 0
         stats["mikrotik"]["wan_tx"] = int(wan_stats.get('tx-byte', 0)) if wan_stats else 0
         
+        # Get traffic speed
+        try:
+            speed = api.get_resource('/interface').call('monitor-traffic', {'interface': 'ether1', 'once': 'yes'})
+            if speed and len(speed) > 0:
+                stats["mikrotik"]["speed_rx_bps"] = int(speed[0].get('rx-bits-per-second', 0))
+                stats["mikrotik"]["speed_tx_bps"] = int(speed[0].get('tx-bits-per-second', 0))
+        except Exception as e:
+            pass
+        
         # 2. Get connected devices (DHCP Leases + ARP)
         leases = api.get_resource('/ip/dhcp-server/lease').get()
         arp = api.get_resource('/ip/arp').get()
