@@ -1,5 +1,16 @@
 <?php
 require_once(__DIR__ . '/config.php');
+
+// Endpoint kiểm tra quyền Admin ngầm (AJAX) không yêu cầu login redirect
+if (isset($_GET['check'])) {
+    if (is_siteadmin()) {
+        echo json_encode(['isAdmin' => true]);
+    } else {
+        echo json_encode(['isAdmin' => false]);
+    }
+    die();
+}
+
 require_login();
 
 // Chỉ cho phép Site Admin (hoặc người có quyền cấu hình hệ thống)
