@@ -10,7 +10,7 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/stats')
+        const res = await fetch('/seb_api.php?action=stats')
         const json = await res.json()
         setData(json)
         
@@ -42,7 +42,7 @@ function App() {
   const shutdown = async () => {
     if (confirm("CẢNH BÁO: Bạn có chắc chắn muốn TẮT MÁY SEB không?")) {
       try {
-        await fetch('/shutdown', { method: 'POST' })
+        await fetch('/seb_api.php?action=shutdown', { method: 'POST' })
         alert("Đã gửi lệnh tắt máy thành công!")
       } catch (err) {
         alert("Lỗi khi gửi lệnh tắt máy.")
